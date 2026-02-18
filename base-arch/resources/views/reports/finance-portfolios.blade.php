@@ -25,7 +25,13 @@
         <main class="container">
             <section class="card">
                 <h1>Relatório de Risco de Carteiras</h1>
-                <p class="muted">Métricas de retorno, volatilidade, Sharpe e concentração (HHI) por carteira.</p>
+                <p class="muted">
+                    @if ($is_admin)
+                        Métricas de retorno, volatilidade, Sharpe e concentração (HHI) por carteira (visão geral).
+                    @else
+                        Métricas de retorno, volatilidade, Sharpe e concentração (HHI) das suas carteiras.
+                    @endif
+                </p>
                 <p class="muted" style="margin-top:8px;">Lookback: {{ $context['lookback_days'] }} dias | Taxa livre de risco anual: {{ number_format($context['annual_risk_free_rate'] * 100, 2, ',', '.') }}%</p>
                 <div class="links" style="margin-top: 12px;">
                     <a href="{{ route('welcome') }}" class="alt">Voltar para Bem-vindo</a>

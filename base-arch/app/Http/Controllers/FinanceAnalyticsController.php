@@ -12,6 +12,9 @@ class FinanceAnalyticsController extends Controller
 {
     public function portfolioRiskReport(Request $request): JsonResponse|View
     {
+        $user = $request->attributes->get('auth_user');
+        $isAdmin = $user && $user->isAdmin();
+
         $lookbackDays = (int) config('finance.lookback_days', 30);
         $annualRiskFreeRate = (float) config('finance.risk_free_rate_annual', 0.08);
         $tradingDays = (int) config('finance.trading_days_per_year', 252);
@@ -20,7 +23,7 @@ class FinanceAnalyticsController extends Controller
             ->select('ph.asset_id', DB::raw('MAX(ph.price_date) as latest_date'))
             ->groupBy('ph.asset_id');
 
-        $positionSnapshot = DB::table('portfolio_positions as pp')
+        $positionSnapshotQuery = DB::table('portfolio_positions as pp')
             ->join('portfolios as p', 'p.id', '=', 'pp.portfolio_id')
             ->join('users as u', 'u.id', '=', 'p.user_id')
             ->join('assets as a', 'a.id', '=', 'pp.asset_id')
@@ -45,10 +48,15 @@ class FinanceAnalyticsController extends Controller
                 DB::raw('(pp.quantity * ph.close_price) as market_value'),
             ])
             ->where('a.active', true)
-            ->orderBy('p.id')
-            ->get();
+            ->orderBy('p.id');
 
-        $dailyValues = DB::table('portfolio_positions as pp')
+        if (! $isAdmin) {
+            $positionSnapshotQuery->where('p.user_id', $user->id);
+        }
+
+        $positionSnapshot = $positionSnapshotQuery->get();
+
+        $dailyValuesQuery = DB::table('portfolio_positions as pp')
             ->join('portfolios as p', 'p.id', '=', 'pp.portfolio_id')
             ->join('assets as a', 'a.id', '=', 'pp.asset_id')
             ->join('price_histories as ph', 'ph.asset_id', '=', 'a.id')
@@ -60,7 +68,13 @@ class FinanceAnalyticsController extends Controller
             ->where('a.active', true)
             ->where('ph.price_date', '>=', now()->subDays($lookbackDays)->toDateString())
             ->groupBy(['p.id', 'ph.price_date'])
-            ->orderBy('ph.price_date')
+            ->orderBy('ph.price_date');
+
+        if (! $isAdmin) {
+            $dailyValuesQuery->where('p.user_id', $user->id);
+        }
+
+        $dailyValues = $dailyValuesQuery
             ->get()
             ->groupBy('portfolio_id');
 
@@ -139,6 +153,7 @@ class FinanceAnalyticsController extends Controller
             ->values();
 
         $payload = [
+            'is_admin' => $isAdmin,
             'context' => [
                 'lookback_days' => $lookbackDays,
                 'annual_risk_free_rate' => $annualRiskFreeRate,

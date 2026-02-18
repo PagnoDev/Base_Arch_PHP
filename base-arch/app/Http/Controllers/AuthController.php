@@ -95,6 +95,7 @@ class AuthController extends Controller
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'role' => 'user',
         ]);
 
         $token = $this->createJwtToken($user);
@@ -140,6 +141,7 @@ class AuthController extends Controller
             'iss' => config('app.url'),
             'sub' => $user->id,
             'email' => $user->email,
+            'role' => $user->role,
             'iat' => $now->timestamp,
             'exp' => $now->addMinutes($ttlMinutes)->timestamp,
         ];

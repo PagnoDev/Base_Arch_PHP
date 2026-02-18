@@ -96,12 +96,15 @@
             <p>Seu login com JWT foi realizado com sucesso.</p>
 
             <div class="user">
-                Usuário autenticado: <strong>{{ $user->name }}</strong> ({{ $user->email }})
+                Usuário autenticado: <strong>{{ $user->name }}</strong> ({{ $user->email }}) | Role: <strong>{{ strtoupper($user->role) }}</strong>
             </div>
 
             <div class="actions">
                 <a href="{{ route('reports.finance.portfolios') }}">Relatório Financeiro</a>
                 <a href="{{ route('reports.orders.complex') }}">Relatório de Pedidos</a>
+                @if ($user->isAdmin())
+                    <a href="{{ route('admin.users.index') }}">Usuários e Roles</a>
+                @endif
             </div>
 
             <form method="POST" action="{{ route('logout') }}">

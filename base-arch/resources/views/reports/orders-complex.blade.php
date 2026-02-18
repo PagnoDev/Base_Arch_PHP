@@ -24,7 +24,13 @@
         <main class="container">
             <section class="card">
                 <h1>Relatório de Pedidos (Query Complexa)</h1>
-                <p class="muted">Pedidos pagos com agregações, joins e ranking de clientes.</p>
+                <p class="muted">
+                    @if ($is_admin)
+                        Pedidos pagos com agregações, joins e ranking de clientes.
+                    @else
+                        Seus pedidos pagos com agregações de itens e valores.
+                    @endif
+                </p>
                 <div class="links" style="margin-top: 12px;">
                     <a href="{{ route('welcome') }}" class="alt">Voltar para Bem-vindo</a>
                     <a href="{{ route('reports.finance.portfolios') }}" class="alt">Ir para Relatório Financeiro</a>
@@ -67,31 +73,33 @@
                 </table>
             </section>
 
-            <section class="card">
-                <h2>Top Clientes</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Cliente</th>
-                            <th>E-mail</th>
-                            <th>Pedidos pagos</th>
-                            <th>Receita bruta</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($top_customers as $customer)
+            @if ($is_admin)
+                <section class="card">
+                    <h2>Top Clientes</h2>
+                    <table>
+                        <thead>
                             <tr>
-                                <td>{{ $customer->name }}</td>
-                                <td>{{ $customer->email }}</td>
-                                <td>{{ $customer->paid_orders_count }}</td>
-                                <td>R$ {{ number_format($customer->gross_revenue, 2, ',', '.') }}</td>
+                                <th>Cliente</th>
+                                <th>E-mail</th>
+                                <th>Pedidos pagos</th>
+                                <th>Receita bruta</th>
                             </tr>
-                        @empty
-                            <tr><td colspan="4">Sem dados para exibir.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </section>
+                        </thead>
+                        <tbody>
+                            @forelse ($top_customers as $customer)
+                                <tr>
+                                    <td>{{ $customer->name }}</td>
+                                    <td>{{ $customer->email }}</td>
+                                    <td>{{ $customer->paid_orders_count }}</td>
+                                    <td>R$ {{ number_format($customer->gross_revenue, 2, ',', '.') }}</td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="4">Sem dados para exibir.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </section>
+            @endif
         </main>
     </body>
 </html>

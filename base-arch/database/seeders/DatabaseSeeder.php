@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
         ], [
             'name' => 'Test User',
             'password' => Hash::make('Senha@123'),
+            'role' => 'admin',
         ]);
 
         $maria = User::query()->updateOrCreate([
@@ -36,6 +37,7 @@ class DatabaseSeeder extends Seeder
         ], [
             'name' => 'Maria Souza',
             'password' => Hash::make('Senha@123'),
+            'role' => 'user',
         ]);
 
         $joao = User::query()->updateOrCreate([
@@ -43,6 +45,7 @@ class DatabaseSeeder extends Seeder
         ], [
             'name' => 'João Lima',
             'password' => Hash::make('Senha@123'),
+            'role' => 'user',
         ]);
 
         $products = [

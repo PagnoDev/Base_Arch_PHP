@@ -13,7 +13,10 @@ class OrderAnalyticsController extends Controller
 {
     public function complexReport(Request $request): JsonResponse|View
     {
-        $paidOrders = Order::query()
+        $user = $request->attributes->get('auth_user');
+        $isAdmin = $user && $user->isAdmin();
+
+        $paidOrdersQuery = Order::query()
             ->select([
                 'orders.id',
                 'orders.code',
@@ -40,26 +43,36 @@ class OrderAnalyticsController extends Controller
                 'users.email',
             ])
             ->havingRaw('SUM(order_items.line_total) > 200')
-            ->orderByDesc('calculated_total')
-            ->get();
+            ->orderByDesc('calculated_total');
 
-        $topCustomers = User::query()
-            ->select([
-                'users.id',
-                'users.name',
-                'users.email',
-                DB::raw('COUNT(DISTINCT orders.id) as paid_orders_count'),
-                DB::raw('SUM(order_items.line_total) as gross_revenue'),
-            ])
-            ->join('orders', 'orders.user_id', '=', 'users.id')
-            ->join('order_items', 'order_items.order_id', '=', 'orders.id')
-            ->where('orders.status', 'paid')
-            ->groupBy(['users.id', 'users.name', 'users.email'])
-            ->orderByDesc('gross_revenue')
-            ->limit(5)
-            ->get();
+        if (! $isAdmin) {
+            $paidOrdersQuery->where('orders.user_id', $user->id);
+        }
+
+        $paidOrders = $paidOrdersQuery->get();
+
+        if ($isAdmin) {
+            $topCustomers = User::query()
+                ->select([
+                    'users.id',
+                    'users.name',
+                    'users.email',
+                    DB::raw('COUNT(DISTINCT orders.id) as paid_orders_count'),
+                    DB::raw('SUM(order_items.line_total) as gross_revenue'),
+                ])
+                ->join('orders', 'orders.user_id', '=', 'users.id')
+                ->join('order_items', 'order_items.order_id', '=', 'orders.id')
+                ->where('orders.status', 'paid')
+                ->groupBy(['users.id', 'users.name', 'users.email'])
+                ->orderByDesc('gross_revenue')
+                ->limit(5)
+                ->get();
+        } else {
+            $topCustomers = collect();
+        }
 
         $payload = [
+            'is_admin' => $isAdmin,
             'summary' => [
                 'paid_orders_analyzed' => $paidOrders->count(),
                 'top_customers_count' => $topCustomers->count(),
